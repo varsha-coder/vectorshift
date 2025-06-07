@@ -7,7 +7,7 @@ export const OutputNode = (props) => (
     {...props}
     label="Output"
     fields={[
-      { name: 'outputName', label: 'Name', type: 'text', defaultValue: props.data?.outputName || 'hello' },
+      { name: 'outputName', label: 'Name', type: 'text', defaultValue: props.data?.outputName || '' },
     ]}
     handles={[
       { type: 'target', position: Position.Left, id: `${props.id}-input` }
