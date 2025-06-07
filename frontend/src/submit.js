@@ -1,8 +1,10 @@
 import axios from 'axios';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
 export async function submitPipeline(nodes, edges) {
     try {
-        const response = await axios.post('http://localhost:8000/pipelines/parse', {
+        const response = await axios.post(`${BACKEND_URL}/pipelines/parse`, {
             nodes,
             edges,
         });
