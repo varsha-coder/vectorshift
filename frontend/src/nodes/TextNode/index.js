@@ -4,7 +4,7 @@ import { GenericNode } from '../../genericNode';
 export const TextNode = (props) => (
   <GenericNode
     {...props}
-    label="Input"
+    label="Text"
     fields={[
       { name: 'inputName', label: 'Name', type: 'text', defaultValue: props.data?.inputName || '' },
       { name: 'inputType', label: 'Type', type: 'select', options: ['Text', 'File'], defaultValue: props.data?.inputType || 'Text' },

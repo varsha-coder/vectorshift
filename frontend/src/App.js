@@ -2,6 +2,7 @@ import { PipelineToolbar } from './toolbar';
 import { PipelineUI } from './ui';
 import { submitPipeline } from './submit';
 import { useStore } from './store';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   // Get nodes and edges from Zustand store
@@ -20,6 +21,7 @@ function App() {
           Submit Pipeline
         </button>
       </div>
+      <ToastContainer />
     </div>
   );
 }
