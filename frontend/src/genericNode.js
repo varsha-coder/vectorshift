@@ -33,8 +33,8 @@ export const GenericNode = ({
     return Array.from(vars);
   }, [textValue]);
 
-  const MAX_WIDTH = 400;
-  const MAX_HEIGHT = 300;
+  const MAX_WIDTH = 500;
+  const MAX_HEIGHT = 200;
   const MIN_WIDTH = 220;
   const MIN_HEIGHT = 40;
 
@@ -42,7 +42,9 @@ export const GenericNode = ({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      const newHeight = Math.min(textareaRef.current.scrollHeight, MAX_HEIGHT);
+      const scrollHeight = textareaRef.current.scrollHeight;
+
+      const newHeight = Math.min(scrollHeight, MAX_HEIGHT);
       textareaRef.current.style.height = `${newHeight}px`;
 
       setDimensions(prev => ({
@@ -138,9 +140,9 @@ export const GenericNode = ({
                     fontFamily: 'inherit',
                     height: dimensions.textareaHeight,
                     boxSizing: 'border-box',
-                    overflow: 'hidden', // no scrollbars unless max height hit
+                    overflow: dimensions.textareaHeight >= MAX_HEIGHT ? 'auto' : 'hidden',
                     maxHeight: `${MAX_HEIGHT}px`,
-                    transition: 'height 0.2s ease', // nice animation!
+                    transition: 'height 0.2s ease',
                   }}
                 />
                 {isMaxed && (
