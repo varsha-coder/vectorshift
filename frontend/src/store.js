@@ -25,6 +25,12 @@ export const useStore = create((set, get) => ({
       nodes: [...get().nodes, node]
     });
   },
+  setNodes: (updater) => {
+    // updater can be a function or an array
+    set((state) => ({
+      nodes: typeof updater === 'function' ? updater(state.nodes) : updater
+    }));
+  },
   onNodesChange: (changes) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
