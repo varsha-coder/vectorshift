@@ -5,7 +5,7 @@ import { useStore } from './store';
 import { ToastContainer } from 'react-toastify';
 
 function App() {
-  // Get nodes and edges from Zustand store
+ 
   const nodes = useStore(state => state.nodes);
   const edges = useStore(state => state.edges);
 

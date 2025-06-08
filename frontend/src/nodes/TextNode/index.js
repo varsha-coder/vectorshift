@@ -10,7 +10,7 @@ export const TextNode = (props) => (
     fields={[
       { name: 'inputName', label: 'Name', type: 'text', defaultValue: props.data?.inputName || '' },
       { name: 'inputType', label: 'Type', type: 'select', options: ['Text', 'File'], defaultValue: props.data?.inputType || 'Text' },
-      { name: 'Text', label: 'Text', type: 'textarea', defaultValue: props.data?.output || '' },
+      { name: 'output', label: 'Text', type: 'textarea', defaultValue: props.data?.output || '' },
     ]}
     description="Provide input data to your workflow. Choose a name and type for this input."
     handles={[

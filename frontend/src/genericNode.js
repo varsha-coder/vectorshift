@@ -169,10 +169,10 @@ export const GenericNode = ({
         <div className="mt-2">
           {fields.map(field => (
             <label key={field.name} className="flex flex-col text-base text-gray-800 mb-2 w-full">
-              {field.name === 'output'||  field.name === 'Text' ? (
+              {field.name === 'output' ? (
                 <>
                   <span className="flex items-center text-sm font-semibold text-gray-700 mb-1">
-                    {field.name}<span className="text-red-500 ml-1">*</span>
+                    {field.label}<span className="text-red-500 ml-1">*</span>
                   </span>
                   <div style={{ position: 'relative', width: '100%' }}>
                     <textarea
