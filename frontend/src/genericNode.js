@@ -15,6 +15,7 @@ export const GenericNode = ({
   showFormatOutput = false,
   formatOutput = false,
   onFormatChange,
+  onVariableReferencesChange
 }) => {
   const [minimized, setMinimized] = useState(false);
   const [fieldState, setFieldState] = useState(
@@ -22,39 +23,42 @@ export const GenericNode = ({
   );
   const [localFormat, setLocalFormat] = useState(formatOutput);
 
-  // Dimensions state
   const [dimensions, setDimensions] = useState({
     width: 300,
     height: 60,
     textareaHeight: 40,
+    textTextareaHeight: 40,
   });
 
-  // For auto-resizing textarea
   const textareaRef = useRef(null);
+  const textTextareaRef = useRef(null);
   const resizing = useRef(false);
 
   const outputValue = fieldState.output ?? '';
+  const textValue = fieldState.text ?? '';
 
-  // Variable matches
   const variableMatches = useMemo(() => {
-    if (!outputValue) return [];
+    // Use textValue for variable extraction if present, else outputValue
+    const valueToParse = textValue || outputValue || fieldState.inputName || '';
+    if (!valueToParse) return [];
     const regex = /\{\{\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\}\}/g;
     const vars = new Set();
     let match;
-    while ((match = regex.exec(outputValue))) {
+    while ((match = regex.exec(valueToParse))) {
       vars.add(match[1]);
     }
-    return Array.from(vars);
-  }, [outputValue]);
+ 
+   return Array.from(vars) 
+    
+  }, [textValue, outputValue, fieldState.inputName]);
 
-  // Constants
   const MAX_WIDTH = 600;
   const MAX_HEIGHT = 250;
   const MIN_WIDTH = 220;
   const MIN_HEIGHT = 40;
 
-  // Auto-grow textarea effect
   useEffect(() => {
+    // Resize output textarea
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       const scrollHeight = textareaRef.current.scrollHeight;
@@ -62,13 +66,27 @@ export const GenericNode = ({
       textareaRef.current.style.height = `${newHeight}px`;
       setDimensions(prev => ({
         ...prev,
-        height: newHeight + 80, // adding padding for node box
+        height: Math.max(prev.height, newHeight + 80),
         textareaHeight: newHeight,
       }));
     }
-  }, [outputValue]);
+    // Resize text textarea
+    if (textTextareaRef.current) {
+      textTextareaRef.current.style.height = 'auto';
+      const scrollHeight = textTextareaRef.current.scrollHeight;
+      const newHeight = Math.min(scrollHeight, MAX_HEIGHT);
+      textTextareaRef.current.style.height = `${newHeight}px`;
+      setDimensions(prev => ({
+        ...prev,
+        height: Math.max(prev.height, newHeight + 80),
+        textTextareaHeight: newHeight,
+      }));
+    }
+    if (typeof onVariableReferencesChange === 'function') {
+      onVariableReferencesChange(variableMatches);
+    }
+  }, [outputValue, textValue, variableMatches, onVariableReferencesChange]);
 
-  // Resize start
   const startResize = useCallback((e) => {
     e.preventDefault();
     resizing.current = true;
@@ -83,11 +101,12 @@ export const GenericNode = ({
       const deltaY = moveEvent.clientY - startY;
       const newWidth = Math.min(Math.max(MIN_WIDTH, startWidth + deltaX), MAX_WIDTH);
       const newHeight = Math.min(Math.max(MIN_HEIGHT, startHeight + deltaY), MAX_HEIGHT);
-      setDimensions({
+      setDimensions(prev => ({
+        ...prev,
         width: newWidth,
         textareaHeight: newHeight,
-        height: newHeight + 80, // match with auto-grow height padding
-      });
+        height: Math.max(prev.height, newHeight + 80),
+      }));
     };
 
     const onMouseUp = () => {
@@ -102,7 +121,6 @@ export const GenericNode = ({
 
   const handleFieldChange = (name, value) => {
     setFieldState(prev => ({ ...prev, [name]: value }));
-    // Optionally: call a callback here if you want to lift state up
   };
 
   const handleFormatChange = () => {
@@ -124,7 +142,6 @@ export const GenericNode = ({
         ...style,
       }}
     >
-      {/* Minimize/Expand button */}
       <button
         className="absolute top-2 right-10 z-10 bg-white rounded-full p-1 shadow hover:bg-blue-100"
         onClick={() => setMinimized(m => !m)}
@@ -133,7 +150,6 @@ export const GenericNode = ({
       >
         <CiMinimize1 className="w-5 h-5 text-blue-500" />
       </button>
-      {/* Delete button */}
       <button
         className="absolute top-2 right-2 z-10 bg-white rounded-full p-1 shadow hover:bg-blue-100"
         onClick={onDelete}
@@ -142,7 +158,6 @@ export const GenericNode = ({
       >
         <MdDelete className="w-5 h-5 text-blue-500" />
       </button>
-      {/* Title bar */}
       <div className="flex items-center mb-2">
         {icon}
         <span className="font-semibold text-gray-700">{label}</span>
@@ -150,20 +165,19 @@ export const GenericNode = ({
       {description && !minimized && (
         <p className="text-xs text-gray-400 mb-3">{description}</p>
       )}
-      {/* Fields */}
       {!minimized && fields.length > 0 && (
         <div className="mt-2">
           {fields.map(field => (
             <label key={field.name} className="flex flex-col text-base text-gray-800 mb-2 w-full">
-              {field.name === 'output' ? (
+              {field.name === 'output'||  field.name === 'Text' ? (
                 <>
                   <span className="flex items-center text-sm font-semibold text-gray-700 mb-1">
-                    Output<span className="text-red-500 ml-1">*</span>
+                    {field.name}<span className="text-red-500 ml-1">*</span>
                   </span>
                   <div style={{ position: 'relative', width: '100%' }}>
                     <textarea
                       ref={textareaRef}
-                      value={fieldState[field.name]}
+                      value={fieldState[field.name] ?? ''}
                       onChange={e => handleFieldChange(field.name, e.target.value)}
                       rows={1}
                       className="border border-blue-200 rounded-md px-2 py-1 text-base bg-white transition-colors focus:border-blue-400 focus:outline-none resize-none w-full font-mono"
@@ -194,17 +208,40 @@ export const GenericNode = ({
                     )}
                   </div>
                 </>
+              ) : field.name === 'text' ? (
+                <>
+                  <span className="flex items-center text-sm font-semibold text-gray-700 mb-1">
+                    Text<span className="text-red-500 ml-1">*</span>
+                  </span>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <textarea
+                      ref={textTextareaRef}
+                      value={fieldState[field.name] ?? ''}
+                      onChange={e => handleFieldChange(field.name, e.target.value)}
+                      rows={1}
+                      className="border border-blue-200 rounded-md px-2 py-1 text-base bg-white transition-colors focus:border-blue-400 focus:outline-none resize-none w-full font-mono"
+                      style={{
+                        fontFamily: 'inherit',
+                        height: dimensions.textTextareaHeight,
+                        boxSizing: 'border-box',
+                        overflow: dimensions.textTextareaHeight >= MAX_HEIGHT ? 'auto' : 'hidden',
+                        maxHeight: `${MAX_HEIGHT}px`,
+                        transition: 'height 0.2s ease',
+                      }}
+                    />
+                  </div>
+                </>
               ) : field.name.toLowerCase().includes('name') ? (
                 <input
                   type="text"
-                  value={fieldState[field.name]}
+                  value={fieldState[field.name] ?? ''}
                   onChange={e => handleFieldChange(field.name, e.target.value)}
                   className="w-full rounded px-2 py-1 text-base text-blue-900 bg-blue-100 font-mono text-center mb-2 border-none focus:ring-2 focus:ring-blue-300"
                   style={{ fontWeight: 600, letterSpacing: 1 }}
                 />
               ) : field.type === 'select' ? (
                 <select
-                  value={fieldState[field.name]}
+                  value={fieldState[field.name] ?? ''}
                   onChange={e => handleFieldChange(field.name, e.target.value)}
                   className="border border-blue-200 rounded-md px-2 py-1 text-base bg-white transition-colors focus:border-blue-400 focus:outline-none w-full"
                 >
@@ -215,7 +252,7 @@ export const GenericNode = ({
               ) : (
                 <input
                   type={field.type}
-                  value={fieldState[field.name]}
+                  value={fieldState[field.name] ?? ''}
                   onChange={e => handleFieldChange(field.name, e.target.value)}
                   className="border border-blue-200 rounded-md px-2 py-1 text-base bg-white transition-colors focus:border-blue-400 focus:outline-none w-full"
                 />
@@ -224,7 +261,6 @@ export const GenericNode = ({
           ))}
         </div>
       )}
-      {/* Format Output Toggle */}
       {!minimized && showFormatOutput && (
         <div className="flex items-center mt-3 mb-2">
           <label className="text-xs text-gray-500 mr-2">Format output</label>
@@ -240,7 +276,6 @@ export const GenericNode = ({
           <span className="ml-2 text-xs text-gray-500">{localFormat ? "Yes" : "No"}</span>
         </div>
       )}
-      {/* Handles for variables on the left */}
       {variableMatches.map((varName, idx) => (
         <Handle
           key={`var-${varName}`}
@@ -250,7 +285,6 @@ export const GenericNode = ({
           style={{ top: 50 + idx * 24 }}
         />
       ))}
-      {/* Existing handles */}
       {handles.map((h, idx) => (
         <Handle key={h.id || idx} type={h.type} position={h.position} id={h.id} style={h.style} />
       ))}

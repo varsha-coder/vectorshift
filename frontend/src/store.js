@@ -57,4 +57,6 @@ export const useStore = create((set, get) => ({
       }),
     });
   },
+  setEdges: (updater) => set(state => ({ edges: typeof updater === 'function' ? updater(state.edges) : updater })),
+
 }));
